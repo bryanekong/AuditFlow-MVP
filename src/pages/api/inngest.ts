@@ -4,7 +4,7 @@ import { processDocument } from "@/inngest/functions"
 
 const handler = serve({
     client: inngest,
-    functions: [processDocument],
+    functions: [], // Temporarily empty to test sync crash
 })
 
 export default handler
