@@ -7,25 +7,24 @@ export default async function WorkspaceDashboard({ params }: { params: { id: str
     // We know the user is authorized because the layout checked it.
     const docsCount = await prisma.document.count({ where: { workspaceId: params.id } })
     const scansCount = await prisma.scanRun.count({ where: { workspaceId: params.id } })
-
-    const latestScan = await prisma.scanRun.findFirst({
-        where: { workspaceId: params.id, status: 'DONE' },
-        orderBy: { finishedAt: 'desc' },
-        include: { findings: true }
-    })
-
-    const scoreDisplay = latestScan && latestScan.score !== null ? `${latestScan.score.toFixed(1)}%` : "Not run"
-    const scoreClass = latestScan?.score !== null
-        ? (latestScan.score >= 80 ? "text-green-600 dark:text-green-400" : (latestScan.score >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"))
-        : "text-gray-400 italic"
-
-    const missingDocsCount = latestScan ? latestScan.findings.filter(f => f.status === 'FAIL').length : "N/A"
-
     const recentDocs = await prisma.document.findMany({
         where: { workspaceId: params.id },
         orderBy: { uploadedAt: 'desc' },
         take: 5
     })
+
+    const latestScan = await prisma.scanRun.findFirst({
+        where: { workspaceId: params.id },
+        orderBy: { startedAt: 'desc' },
+        include: { findings: true }
+    })
+
+    const scoreDisplay = latestScan && latestScan.score !== null ? `${latestScan.score.toFixed(1)}%` : "Not run"
+    const scoreClass = latestScan?.score !== null
+        ? (latestScan.score! >= 80 ? "text-green-600 dark:text-green-400" : (latestScan.score! >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"))
+        : "text-gray-400 italic"
+
+    const missingDocsCount = latestScan ? latestScan.findings.filter((f: any) => f.status === 'FAIL').length : "N/A"
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
@@ -54,7 +53,7 @@ export default async function WorkspaceDashboard({ params }: { params: { id: str
                 </div>
                 <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-800 shadow-sm transition hover:shadow-md">
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Missing Docs</h3>
-                    <p className={`mt-2 text-3xl font-bold ${missingDocsCount !== "N/A" ? "text-gray-900 dark:text-white" : "text-gray-400 italic"}`}>{missingDocsCount}</p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{missingDocsCount}</p>
                 </div>
             </div>
 
