@@ -69,13 +69,15 @@ export default async function DocumentDetailsPage({ params, searchParams }: { pa
                                 Failed to extract text from this document.
                             </div>
                         )}
-                        {document.status === 'PROCESSED' && document.metadata?.extractedTextPreview ? (
+                        {document.status === 'PROCESSED' && document.metadata?.extractedTextPreview?.trim() ? (
                             <DocumentViewerClient
                                 text={document.metadata.extractedTextPreview}
                                 highlights={highlights}
                             />
                         ) : document.status === 'PROCESSED' && (
-                            <div className="text-gray-500 italic p-4">No parseable text extracted from document.</div>
+                            <div className="text-gray-500 italic flex items-center justify-center p-8 bg-gray-50 dark:bg-zinc-950 rounded-lg">
+                                No parseable text detected. This document may be image-based or digitally corrupted.
+                            </div>
                         )}
                     </div>
                 </div>
