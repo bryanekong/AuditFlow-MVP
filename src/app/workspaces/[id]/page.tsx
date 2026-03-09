@@ -19,9 +19,10 @@ export default async function WorkspaceDashboard({ params }: { params: { id: str
         include: { findings: true }
     })
 
-    const scoreDisplay = latestScan && latestScan.score !== null ? `${latestScan.score.toFixed(1)}%` : "Not run"
-    const scoreClass = latestScan?.score !== null
-        ? (latestScan.score! >= 80 ? "text-green-600 dark:text-green-400" : (latestScan.score! >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"))
+    const scoreVal = latestScan?.score ?? null
+    const scoreDisplay = scoreVal !== null ? `${scoreVal.toFixed(1)}%` : "Not run"
+    const scoreClass = scoreVal !== null
+        ? (scoreVal >= 80 ? "text-green-600 dark:text-green-400" : (scoreVal >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"))
         : "text-gray-400 italic"
 
     const missingDocsCount = latestScan ? latestScan.findings.filter((f: any) => f.status === 'FAIL').length : "N/A"
