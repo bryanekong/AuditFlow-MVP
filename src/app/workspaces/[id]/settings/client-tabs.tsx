@@ -171,13 +171,33 @@ export default function ClientTabs({ workspace, currentRole, currentUserId }: { 
                                 <h3 className="font-medium text-gray-900 dark:text-white mb-3">Pending Invitations ({workspace.invitations.length})</h3>
                                 <ul className="divide-y divide-gray-200 dark:divide-zinc-800 border-t border-b border-gray-200 dark:border-zinc-800">
                                     {workspace.invitations.map((inv: any) => (
-                                        <li key={inv.id} className="py-3 flex justify-between items-center">
-                                            <div className="text-sm">
-                                                <span className="font-medium dark:text-white">{inv.email}</span>
-                                                <span className="ml-2 text-xs text-gray-500 bg-gray-100 dark:bg-zinc-800 px-2 rounded-full">{inv.role}</span>
+                                        <li key={inv.id} className="py-4 flex justify-between items-start">
+                                            <div className="text-sm flex-1 mr-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium dark:text-white">{inv.email}</span>
+                                                    <span className="text-xs text-gray-500 bg-gray-100 dark:bg-zinc-800 px-2 rounded-full">{inv.role}</span>
+                                                </div>
                                                 <p className="text-xs text-gray-400 mt-1">Expires: {new Date(inv.expiresAt).toLocaleDateString()}</p>
+
+                                                {/* Local Testing MVP: Display the link directly */}
+                                                <div className="mt-3 flex items-center gap-2">
+                                                    <input
+                                                        readOnly
+                                                        value={typeof window !== 'undefined' ? `${window.location.origin}/invite/${inv.token}` : ''}
+                                                        className="text-xs font-mono bg-gray-100 dark:bg-zinc-950 p-2 rounded-md border border-gray-200 dark:border-zinc-800 w-full max-w-[300px] text-gray-600 dark:text-gray-400 cursor-text"
+                                                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                                                    />
+                                                    <button
+                                                        onClick={() => navigator.clipboard.writeText(typeof window !== 'undefined' ? `${window.location.origin}/invite/${inv.token}` : '')}
+                                                        className="text-xs font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-zinc-800 dark:text-gray-300 dark:border-zinc-700 dark:hover:bg-zinc-700 rounded-md px-3 py-2 transition-colors shadow-sm"
+                                                    >
+                                                        Copy Link
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button onClick={() => handleRevoke(inv.id)} disabled={loading} className="text-xs text-red-600 hover:underline disabled:opacity-50">Revoke</button>
+                                            <button onClick={() => handleRevoke(inv.id)} disabled={loading} className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium py-1 px-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50 transition-colors">
+                                                Revoke
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
