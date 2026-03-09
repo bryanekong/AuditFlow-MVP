@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { UploadForm } from "./upload-form"
 import { deleteDocument } from "./actions"
 import { DeleteForm } from "./delete-form"
+import Link from 'next/link'
 
 
 
@@ -39,8 +40,10 @@ export default async function DocumentsPage({ params }: { params: { id: string }
                             {documents.length > 0 ? (
                                 documents.map(doc => (
                                     <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                            <span className="truncate max-w-[200px]" title={doc.filename}>{doc.filename}</span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center gap-2">
+                                            <Link href={`/workspaces/${params.id}/documents/${doc.id}`} className="truncate max-w-[200px] text-blue-600 dark:text-blue-400 hover:underline" title={doc.filename}>
+                                                {doc.filename}
+                                            </Link>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {doc.metadata?.docType || 'Unclassified'}
