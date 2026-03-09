@@ -17,9 +17,14 @@ export default async function Home() {
           Go to Workspaces
         </Link>
       ) : (
-        <Link href="/auth" className="rounded-full bg-black px-8 py-3 text-lg font-semibold text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-lg">
-          Get Started
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/auth/login" className="rounded-full bg-white border border-gray-200 px-8 py-3 text-lg font-semibold text-black hover:bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-800 transition-transform hover:scale-105 active:scale-95 shadow-sm">
+            Log In
+          </Link>
+          <Link href="/auth/signup" className="rounded-full bg-black px-8 py-3 text-lg font-semibold text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 shadow-lg">
+            Get Started
+          </Link>
+        </div>
       )}
     </div>
   )

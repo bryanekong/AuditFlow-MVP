@@ -3,13 +3,23 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { signout } from "@/app/auth/actions"
+import { prisma } from "@/lib/prisma"
 
 export default async function WorkspacesLayout({ children }: { children: ReactNode }) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        redirect("/auth")
+        redirect("/auth/login")
+    }
+
+    const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { onboardingCompleted: true }
+    })
+
+    if (dbUser && !dbUser.onboardingCompleted) {
+        redirect("/onboarding")
     }
 
     return (

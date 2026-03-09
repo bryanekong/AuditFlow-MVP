@@ -16,7 +16,7 @@ export async function login(formData: FormData) {
 
     const { error } = await supabase.auth.signInWithPassword(data)
     if (error) {
-        return redirect('/auth?error=' + encodeURIComponent(error.message))
+        return redirect('/auth/login?error=' + encodeURIComponent(error.message))
     }
 
     revalidatePath('/', 'layout')
@@ -42,7 +42,7 @@ export async function signup(formData: FormData) {
     })
 
     if (error) {
-        return redirect('/auth?error=' + encodeURIComponent(error.message))
+        return redirect('/auth/signup?error=' + encodeURIComponent(error.message))
     }
 
     if (authData.user) {
@@ -55,6 +55,7 @@ export async function signup(formData: FormData) {
                     id: authData.user.id,
                     email: data.email,
                     name: data.name,
+                    onboardingCompleted: false
                 }
             })
         } catch (e) {
@@ -64,11 +65,11 @@ export async function signup(formData: FormData) {
 
     // If email confirmation is required, session might be null
     if (!authData.session) {
-        return redirect('/auth?message=' + encodeURIComponent('Check your email to continue sign in process.'))
+        return redirect('/auth/signup?message=' + encodeURIComponent('Check your email to continue sign in process.'))
     }
 
     revalidatePath('/', 'layout')
-    redirect('/workspaces')
+    redirect('/onboarding')
 }
 
 export async function signout() {
