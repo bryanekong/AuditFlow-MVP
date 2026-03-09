@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
+import { checkPermissions } from '@/lib/rbac'
 
 
 
@@ -12,10 +13,8 @@ export async function runScan(workspaceId: string, formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: { workspaceId_userId: { workspaceId, userId: user.id } }
-    })
-    if (!membership) throw new Error('Not authorized')
+    const hasAccess = await checkPermissions(user.id, workspaceId, 'MEMBER')
+    if (!hasAccess) throw new Error('Not authorized')
 
     const frameworkId = formData.get('frameworkId') as string
     if (!frameworkId) throw new Error('Framework required')

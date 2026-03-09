@@ -17,6 +17,7 @@ model User {
   workspaces          WorkspaceMember[]
   auditLogs           AuditLogEvent[]
   uploadedDocs        Document[]
+  sentInvites         WorkspaceInvitation[]
 }
 
 model Workspace {
@@ -29,16 +30,32 @@ model Workspace {
   documents        Document[]
   scans            ScanRun[]
   auditLogs        AuditLogEvent[]
+  invitations      WorkspaceInvitation[]
 }
 
 model WorkspaceMember {
   workspaceId      String
   userId           String
   role             String            // OWNER|ADMIN|MEMBER|VIEWER
-  workspace        Workspace         @relation(fields: [workspaceId], references: [id])
-  user             User              @relation(fields: [userId], references: [id])
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([workspaceId, userId])
+}
+
+model WorkspaceInvitation {
+  id          String   @id @default(uuid())
+  workspaceId String
+  email       String
+  role        String   // ADMIN|MEMBER|VIEWER
+  token       String   @unique
+  expiresAt   DateTime
+  invitedBy   String
+  createdAt   DateTime @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter     User      @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
 }
 
 model Document {
@@ -52,7 +69,7 @@ model Document {
   uploadedAt         DateTime           @default(now())
   status             String             // UPLOADED|PROCESSED|FAILED
   extractedTextHash  String?
-  workspace          Workspace          @relation(fields: [workspaceId], references: [id])
+  workspace          Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user               User               @relation(fields: [uploadedBy], references: [id])
   versions           DocumentVersion[]
   metadata           DocumentMetadata?
@@ -113,7 +130,7 @@ model ScanRun {
   score            Float?
   ruleSetVersion   String
   createdBy        String
-  workspace        Workspace     @relation(fields: [workspaceId], references: [id])
+  workspace        Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   framework        Framework     @relation(fields: [frameworkId], references: [id])
   findings         ScanFinding[]
 }
@@ -140,6 +157,6 @@ model AuditLogEvent {
   entityId     String
   metadata     Json?
   createdAt    DateTime    @default(now())
-  workspace    Workspace   @relation(fields: [workspaceId], references: [id])
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actor        User        @relation(fields: [actorUserId], references: [id])
 }
