@@ -31,6 +31,7 @@ model Workspace {
   scans            ScanRun[]
   auditLogs        AuditLogEvent[]
   invitations      WorkspaceInvitation[]
+  evidenceItems    EvidenceItem[]
 }
 
 model WorkspaceMember {
@@ -73,6 +74,7 @@ model Document {
   user               User               @relation(fields: [uploadedBy], references: [id])
   versions           DocumentVersion[]
   metadata           DocumentMetadata?
+  evidenceItems      EvidenceItem[]
 }
 
 model DocumentVersion {
@@ -95,6 +97,89 @@ model DocumentMetadata {
   document             Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 }
 
+// ─── Control-Evidence Graph (CEG) Models ───────────────────────────────────────
+
+// Represents a versioned release of the control library (e.g. ISO 27001 v1.0.0)
+model ControlLibraryVersion {
+  id            String   @id @default(uuid())
+  frameworkId   String
+  version       String   // semver e.g. "1.0.0"
+  releasedAt    DateTime @default(now())
+  reviewedBy    String   // name of reviewer (compliance role)
+  notes         String?  @db.Text
+  isActive      Boolean  @default(true)
+  framework     Framework @relation(fields: [frameworkId], references: [id])
+  changeLogs    ControlLibraryChangeLog[]
+  evidenceTypes EvidenceType[]
+}
+
+// Immutable audit log of every change to the control library
+model ControlLibraryChangeLog {
+  id               String                @id @default(uuid())
+  libraryVersionId String
+  controlCode      String                // e.g. "A.9.1"
+  changeType       String                // ADDED|MODIFIED|REMOVED
+  summary          String                @db.Text
+  customerImpact   String?               @db.Text
+  createdAt        DateTime              @default(now())
+  libraryVersion   ControlLibraryVersion @relation(fields: [libraryVersionId], references: [id], onDelete: Cascade)
+}
+
+// Defines what constitutes valid evidence for a given requirement
+model EvidenceType {
+  id               String                @id @default(uuid())
+  libraryVersionId String
+  requirementId    String
+  name             String                // e.g. "Access Control Policy"
+  description      String                @db.Text
+  requiredDocTypes String[]              // allowed docType values from DocumentMetadata
+  maxAgeDays       Int                   // freshness rule: evidence older than this fails
+  requiredKeywords String[]              // must appear in extractedTextPreview
+  requiredFields   Json?                 // JSON list of metadata fields that must be present
+  systemSource     String?               // e.g. "Google Workspace", "Jira", "manual"
+  createdAt        DateTime              @default(now())
+  libraryVersion   ControlLibraryVersion @relation(fields: [libraryVersionId], references: [id])
+  requirement      FrameworkRequirement  @relation(fields: [requirementId], references: [id])
+  evidenceItems    EvidenceItem[]
+}
+
+// An actual evidence artefact submitted for a workspace/requirement
+model EvidenceItem {
+  id             String            @id @default(uuid())
+  workspaceId    String
+  documentId     String?           // linked document (if uploaded)
+  evidenceTypeId String
+  ownerName      String?           // person responsible for this evidence
+  systemSource   String?           // e.g. "manual", "Google Workspace"
+  evidenceDate   DateTime?         // date of the evidence (not upload date)
+  policyVersion  String?           // version of the policy/doc if applicable
+  notes          String?           @db.Text
+  createdAt      DateTime          @default(now())
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  document       Document?         @relation(fields: [documentId], references: [id])
+  evidenceType   EvidenceType      @relation(fields: [evidenceTypeId], references: [id])
+  qualityResults QualityGateResult[]
+}
+
+// Records deterministic check results for each evidence item in a scan
+model QualityGateResult {
+  id               String               @id @default(uuid())
+  scanRunId        String
+  evidenceItemId   String
+  requirementId    String
+  freshnessPass    Boolean              // evidenceDate within maxAgeDays
+  completenessPass Boolean              // all required fields present
+  consistencyPass  Boolean              // keywords found in extracted text
+  overallPass      Boolean              // true only if all three pass
+  failureReasons   Json?                // array of human-readable failure messages
+  checkedAt        DateTime             @default(now())
+  scanRun          ScanRun              @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  evidenceItem     EvidenceItem         @relation(fields: [evidenceItemId], references: [id], onDelete: Cascade)
+  requirement      FrameworkRequirement @relation(fields: [requirementId], references: [id])
+}
+
+// ─── Framework Models ──────────────────────────────────────────────────────────
+
 model Framework {
   id           String                 @id @default(uuid())
   code         String                 // ISO27001|GDPR
@@ -103,6 +188,7 @@ model Framework {
   description  String?
   requirements FrameworkRequirement[]
   scans        ScanRun[]
+  libraryVersions ControlLibraryVersion[]
 }
 
 model FrameworkRequirement {
@@ -118,6 +204,8 @@ model FrameworkRequirement {
   guidance          String       @db.Text
   framework         Framework    @relation(fields: [frameworkId], references: [id])
   scanFindings      ScanFinding[]
+  evidenceTypes    EvidenceType[]
+  qualityResults   QualityGateResult[]
 }
 
 model ScanRun {
@@ -133,6 +221,12 @@ model ScanRun {
   workspace        Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   framework        Framework     @relation(fields: [frameworkId], references: [id])
   findings         ScanFinding[]
+  ariCoverage      Float?        // ARI component: % controls with any evidence
+  ariValidity      Float?        // ARI component: % evidence passing quality gate
+  ariFreshness     Float?        // ARI component: % evidence within time window
+  ariExceptionLoad Float?        // ARI component: inverse exception severity score
+  ariScore         Float?        // Final weighted ARI score (0-100)
+  qualityResults   QualityGateResult[]
 }
 
 model ScanFinding {
@@ -144,6 +238,10 @@ model ScanFinding {
   matchedDocumentIds   Json                 // Array of document IDs
   notes                String?              @db.Text
   recommendedActions   Json?                // Array of strings
+  // Quality Gate results for this finding
+  freshnessPass      Boolean?
+  completenessPass   Boolean?
+  consistencyPass    Boolean?
   scanRun              ScanRun              @relation(fields: [scanRunId], references: [id])
   requirement          FrameworkRequirement @relation(fields: [requirementId], references: [id])
 }

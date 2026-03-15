@@ -11,7 +11,9 @@ export function SidebarNav({ workspaceId }: { workspaceId: string }) {
         { name: 'Documents', href: `/workspaces/${workspaceId}/documents`, exact: false },
         { name: 'Scans', href: `/workspaces/${workspaceId}/scans`, exact: false },
         { name: 'Settings', href: `/workspaces/${workspaceId}/settings`, exact: false },
+        { name: 'Changelog', href: `/workspaces/${workspaceId}/settings/changelog`, exact: false },
     ]
+
 
     return (
         <nav className="flex-1 px-4 space-y-1">
