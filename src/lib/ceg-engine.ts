@@ -12,6 +12,7 @@
 
 export type EvidenceTypeConfig = {
     id: string
+    name: string
     requirementId: string
     maxAgeDays: number
     requiredKeywords: string[]

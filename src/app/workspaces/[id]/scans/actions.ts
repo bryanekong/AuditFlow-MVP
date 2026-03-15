@@ -63,9 +63,10 @@ export async function runScan(workspaceId: string, formData: FormData) {
     }))
 
     // Build a map: requirementId → EvidenceTypeConfig
-    const evidenceTypeMap = new Map(
+    const evidenceTypeMap = new Map<string, EvidenceTypeConfig>(
         (activeLibrary?.evidenceTypes ?? []).map(et => [et.requirementId, {
             id: et.id,
+            name: et.name,
             requirementId: et.requirementId,
             maxAgeDays: et.maxAgeDays,
             requiredKeywords: et.requiredKeywords,
