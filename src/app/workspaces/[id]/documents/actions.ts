@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { inngest } from '@/inngest/client'
+import { checkPermissions } from '@/lib/rbac'
 
 
 
@@ -13,10 +14,8 @@ export async function uploadDocument(workspaceId: string, formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: { workspaceId_userId: { workspaceId, userId: user.id } }
-    })
-    if (!membership) throw new Error('Not authorized')
+    const hasAccess = await checkPermissions(user.id, workspaceId, 'MEMBER')
+    if (!hasAccess) throw new Error('Not authorized')
 
     const file = formData.get('file') as File
     if (!file || file.size === 0) throw new Error('No valid file provided')
@@ -41,35 +40,72 @@ export async function uploadDocument(workspaceId: string, formData: FormData) {
         throw new Error('Storage upload failed: ' + uploadError.message)
     }
 
-    const doc = await prisma.document.create({
-        data: {
-            workspaceId,
-            filename: file.name,
-            mimeType: file.type || 'application/octet-stream',
-            storagePath,
-            size: file.size,
-            uploadedBy: user.id,
-            status: 'UPLOADED'
-        }
+    // Check for existing document with same filename in this workspace
+    const existingDoc = await prisma.document.findFirst({
+        where: { workspaceId, filename: file.name },
+        include: { versions: true }
     })
 
-    await prisma.documentVersion.create({
-        data: {
-            documentId: doc.id,
-            versionNumber: 1,
-            storagePath,
-            uploadedBy: user.id
-        }
-    })
+    let docId: string
+    let actionType = 'DOCUMENT_UPLOADED'
+
+    if (existingDoc) {
+        // Create new version and update existing doc
+        const nextVersion = existingDoc.versions.length + 1
+        await prisma.documentVersion.create({
+            data: {
+                documentId: existingDoc.id,
+                versionNumber: nextVersion,
+                storagePath,
+                uploadedBy: user.id
+            }
+        })
+
+        await prisma.document.update({
+            where: { id: existingDoc.id },
+            data: {
+                storagePath,
+                size: file.size,
+                uploadedBy: user.id,
+                status: 'UPLOADED',
+                extractedTextHash: null // Reset so we know to re-parse
+            }
+        })
+        docId = existingDoc.id
+        actionType = 'DOCUMENT_UPDATED'
+    } else {
+        // Create new document
+        const newDoc = await prisma.document.create({
+            data: {
+                workspaceId,
+                filename: file.name,
+                mimeType: file.type || 'application/octet-stream',
+                storagePath,
+                size: file.size,
+                uploadedBy: user.id,
+                status: 'UPLOADED'
+            }
+        })
+
+        await prisma.documentVersion.create({
+            data: {
+                documentId: newDoc.id,
+                versionNumber: 1,
+                storagePath,
+                uploadedBy: user.id
+            }
+        })
+        docId = newDoc.id
+    }
 
     await prisma.auditLogEvent.create({
         data: {
             workspaceId,
             actorUserId: user.id,
-            action: 'DOCUMENT_UPLOADED',
+            action: actionType,
             entityType: 'DOCUMENT',
-            entityId: doc.id,
-            metadata: { filename: file.name, size: file.size }
+            entityId: docId,
+            metadata: { filename: file.name, size: file.size, isNewVersion: !!existingDoc }
         }
     })
 
@@ -77,7 +113,7 @@ export async function uploadDocument(workspaceId: string, formData: FormData) {
     try {
         const inngestRes = await inngest.send({
             name: 'app/document.uploaded',
-            data: { documentId: doc.id, workspaceId, storagePath: doc.storagePath }
+            data: { documentId: docId, workspaceId, storagePath }
         });
         console.log("INNGEST SEND SUCCESS:", inngestRes);
     } catch (inngestErr) {
@@ -93,12 +129,8 @@ export async function deleteDocument(workspaceId: string, documentId: string, st
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: { workspaceId_userId: { workspaceId, userId: user.id } }
-    })
-    if (!membership || (membership.role !== 'OWNER' && membership.role !== 'ADMIN')) {
-        throw new Error('Not authorized to delete')
-    }
+    const hasAccess = await checkPermissions(user.id, workspaceId, 'ADMIN')
+    if (!hasAccess) throw new Error('Not authorized to delete')
 
     // Delete from storage using admin client to bypass RLS
     const adminSupabase = createSupabaseClient(

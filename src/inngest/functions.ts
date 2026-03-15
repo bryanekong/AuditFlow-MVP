@@ -68,8 +68,15 @@ export const processDocument = inngest.createFunction(
         })
 
         await step.run("update-db", async () => {
-            await prisma.documentMetadata.create({
-                data: {
+            await prisma.documentMetadata.upsert({
+                where: { documentId },
+                update: {
+                    docType: classification.docType,
+                    confidence: classification.confidence,
+                    extractedTextPreview: extractedText.substring(0, 2000),
+                    processedAt: new Date()
+                },
+                create: {
                     documentId,
                     docType: classification.docType,
                     confidence: classification.confidence,
