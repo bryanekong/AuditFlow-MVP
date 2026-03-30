@@ -9,8 +9,8 @@ export function SidebarNav({ workspaceId }: { workspaceId: string }) {
     const navLinks = [
         { name: 'Dashboard', href: `/workspaces/${workspaceId}`, exact: true },
         { name: 'Documents', href: `/workspaces/${workspaceId}/documents`, exact: false },
+        { name: 'Compliance Hub', href: `/workspaces/${workspaceId}/compliance`, exact: false },
         { name: 'Scans', href: `/workspaces/${workspaceId}/scans`, exact: false },
-        { name: 'Settings', href: `/workspaces/${workspaceId}/settings`, exact: false },
         { name: 'Changelog', href: `/workspaces/${workspaceId}/settings/changelog`, exact: false },
     ]
 

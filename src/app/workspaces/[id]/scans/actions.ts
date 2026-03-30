@@ -53,14 +53,23 @@ export async function runScan(workspaceId: string, formData: FormData) {
         include: { metadata: true }
     })
 
-    const evidenceDocs = docs.map(d => ({
+    const allWorkspaceDocs = docs.map(d => ({
         id: d.id,
         docType: d.metadata?.docType ?? null,
         extractedTextPreview: d.metadata?.extractedTextPreview ?? null,
         uploadedAt: d.uploadedAt,
         ownerName: null,
         evidenceDate: null,
+        systemSource: null,
     }))
+
+    // ── Load explicit EvidenceItems for this workspace ─────────────────────────
+    const evidenceItems = await prisma.evidenceItem.findMany({
+        where: { workspaceId },
+        include: { 
+            document: { include: { metadata: true } }
+        }
+    })
 
     // Build a map: requirementId → EvidenceTypeConfig
     const evidenceTypeMap = new Map<string, EvidenceTypeConfig>(
@@ -88,15 +97,19 @@ export async function runScan(workspaceId: string, formData: FormData) {
     for (const req of framework.requirements) {
         const evidenceType = evidenceTypeMap.get(req.id)
 
-        // ── Layer 1: Ingestion – filter candidate docs ─────────────────────────
-        const candidateDocs = evidenceDocs.filter(doc => {
-            if (!doc.docType) return false
-            const typeMatch = (evidenceType?.requiredDocTypes ?? req.requiredDocTypes).includes(doc.docType)
-            if (!typeMatch) return false
-            const textLower = (doc.extractedTextPreview ?? '').toLowerCase()
-            const keywords = evidenceType?.requiredKeywords ?? req.keywords
-            return keywords.some(kw => textLower.includes(kw.toLowerCase()))
-        })
+        // ── Layer 1: Ingestion – get explicit mappings for this requirement ────
+        const mappedItems = evidenceItems.filter(item => item.evidenceTypeId === evidenceType?.id)
+        
+        const candidateDocs = mappedItems.map(item => ({
+            id: item.document?.id ?? item.id, // Fallback to item ID if it's an external link
+            docType: item.document?.metadata?.docType ?? null,
+            extractedTextPreview: item.document?.metadata?.extractedTextPreview ?? null,
+            uploadedAt: item.document?.uploadedAt ?? item.createdAt,
+            // Pass explicit traceability metadata to the engine
+            ownerName: item.ownerName,
+            systemSource: item.systemSource,
+            evidenceDate: item.evidenceDate,
+        }))
 
         // ── Layer 2 & 3: Quality Gate + Evaluation ─────────────────────────────
         const evaluation = evaluateRequirement(
@@ -105,7 +118,7 @@ export async function runScan(workspaceId: string, formData: FormData) {
             req.guidance,
             evidenceType,
             candidateDocs,
-            evidenceDocs,
+            allWorkspaceDocs,
             now,
         )
         evaluations.push({ evaluation, severity: req.severity })
