@@ -11,7 +11,13 @@ type UploadItem = {
     error?: string
 }
 
-export function UploadForm({ workspaceId }: { workspaceId: string }) {
+export function UploadForm({ 
+    workspaceId,
+    onUploadSuccess 
+}: { 
+    workspaceId: string
+    onUploadSuccess?: (documentId: string) => void
+}) {
     const [uploads, setUploads] = useState<UploadItem[]>([])
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -37,9 +43,12 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
         try {
             const formData = new FormData()
             formData.append('file', file)
-            await uploadDocument(workspaceId, formData)
+            const result = await uploadDocument(workspaceId, formData)
 
             setUploads(prev => prev.map(u => u.id === id ? { ...u, status: 'success' } : u))
+            if (result?.docId && onUploadSuccess) {
+                onUploadSuccess(result.docId)
+            }
         } catch (err: any) {
             setUploads(prev => prev.map(u => u.id === id ? { ...u, status: 'error', error: err.message || 'Upload failed' } : u))
         }

@@ -22,10 +22,12 @@ model User {
 
 model Workspace {
   id               String            @id @default(uuid())
-  name             String
-  industry         String?
-  ownerId          String
-  createdAt        DateTime          @default(now())
+  name                String
+  industry            String?
+  onboardingStep      Int               @default(1)
+  onboardingCompleted Boolean           @default(false)
+  ownerId             String
+  createdAt           DateTime          @default(now())
   members          WorkspaceMember[]
   documents        Document[]
   scans            ScanRun[]

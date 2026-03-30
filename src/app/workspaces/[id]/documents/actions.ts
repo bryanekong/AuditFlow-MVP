@@ -121,7 +121,7 @@ export async function uploadDocument(workspaceId: string, formData: FormData) {
     }
 
     revalidatePath(`/workspaces/${workspaceId}/documents`)
-    return { success: true }
+    return { success: true, docId }
 }
 
 export async function deleteDocument(workspaceId: string, documentId: string, storagePath: string) {

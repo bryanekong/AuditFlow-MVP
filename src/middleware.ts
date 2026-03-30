@@ -24,16 +24,28 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/workspaces', request.url))
     }
 
-    // Simple Workspace RBAC check
-    // If the user goes to /workspaces/[id]/..., we can check if they have access
+    // Workspace Onboarding Interceptor
     const workspaceMatch = path.match(/^\/workspaces\/([^/]+)/)
     if (workspaceMatch && user) {
         const workspaceId = workspaceMatch[1]
+        
+        // Only intercept if we are deep inside a workspace but NOT on the onboarding pages or APIs
+        const isOnboardingRoute = path.includes('/onboarding')
+        const isApiRoute = path.startsWith('/api')
+        const isBaseWorkspaceRoute = path === '/workspaces'
 
-        // For MVP performance, rather than holding up middleware, RBAC checks
-        // on specific workspace IDs are typically best done in layout.tsx or Server Actions.
-        // However, if we must do it here, we'd query Prisma or Supabase RPC.
-        // For simplicity, we'll verify it in the page/layout components and server actions.
+        if (!isOnboardingRoute && !isApiRoute && !isBaseWorkspaceRoute) {
+            // Query Supabase directly since Prisma isn't Edge-compatible here
+            const { data: workspace } = await supabase
+                .from('Workspace')
+                .select('onboardingCompleted')
+                .eq('id', workspaceId)
+                .single()
+
+            if (workspace && workspace.onboardingCompleted === false) {
+                return NextResponse.redirect(new URL(`/workspaces/${workspaceId}/onboarding`, request.url))
+            }
+        }
     }
 
     return response
