@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { EvidenceSubmissionModal } from './evidence-submission-modal'
+import { ExceptionModal } from './exception-modal'
 
 
 export default async function ControlDetailsPage({ params }: { params: { id: string, frameworkId: string, requirementId: string } }) {
@@ -46,7 +47,10 @@ export default async function ControlDetailsPage({ params }: { params: { id: str
                         'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                     }`}>{requirement.severity}</span>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{requirement.description}</p>
+                <div className="flex items-start justify-between mt-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-2xl">{requirement.description}</p>
+                    <ExceptionModal workspaceId={params.id} requirementId={requirement.id} severity={requirement.severity} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

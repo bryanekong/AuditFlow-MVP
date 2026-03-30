@@ -34,6 +34,7 @@ model Workspace {
   auditLogs        AuditLogEvent[]
   invitations      WorkspaceInvitation[]
   evidenceItems    EvidenceItem[]
+  exceptions       ControlException[]
 }
 
 model WorkspaceMember {
@@ -208,8 +209,9 @@ model FrameworkRequirement {
   guidance          String       @db.Text
   framework         Framework    @relation(fields: [frameworkId], references: [id])
   scanFindings      ScanFinding[]
-  evidenceTypes    EvidenceType[]
-  qualityResults   QualityGateResult[]
+  evidenceTypes     EvidenceType[]
+  qualityResults    QualityGateResult[]
+  exceptions        ControlException[]
 }
 
 model ScanRun {
@@ -262,4 +264,22 @@ model AuditLogEvent {
   createdAt    DateTime    @default(now())
   workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actor        User        @relation(fields: [actorUserId], references: [id])
+}
+
+// Tracks remediation efforts and risk acceptance for failed controls
+model ControlException {
+  id              String               @id @default(uuid())
+  workspaceId     String
+  requirementId   String
+  status          String               // OPEN|IN_PROGRESS|RESOLVED|RISK_ACCEPTED
+  severity        String               // CRITICAL|HIGH|MEDIUM|LOW
+  title           String
+  description     String               @db.Text
+  ownerName       String               // Person responsible for remediation
+  dueDate         DateTime?
+  openedAt        DateTime             @default(now())
+  resolvedAt      DateTime?
+  
+  workspace       Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  requirement     FrameworkRequirement @relation(fields: [requirementId], references: [id])
 }

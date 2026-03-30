@@ -2,16 +2,25 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { 
+    LayoutDashboard, 
+    ShieldCheck, 
+    FileText, 
+    Activity, 
+    Settings,
+    AlertTriangle 
+} from 'lucide-react'
 
 export function SidebarNav({ workspaceId }: { workspaceId: string }) {
     const pathname = usePathname()
 
     const navLinks = [
-        { name: 'Dashboard', href: `/workspaces/${workspaceId}`, exact: true },
-        { name: 'Documents', href: `/workspaces/${workspaceId}/documents`, exact: false },
-        { name: 'Compliance Hub', href: `/workspaces/${workspaceId}/compliance`, exact: false },
-        { name: 'Scans', href: `/workspaces/${workspaceId}/scans`, exact: false },
-        { name: 'Changelog', href: `/workspaces/${workspaceId}/settings/changelog`, exact: false },
+        { name: 'Dashboard', href: `/workspaces/${workspaceId}`, exact: true, icon: LayoutDashboard },
+        { name: 'Documents', href: `/workspaces/${workspaceId}/documents`, exact: false, icon: FileText },
+        { name: 'Compliance Hub', href: `/workspaces/${workspaceId}/compliance`, exact: false, icon: ShieldCheck },
+        { name: 'Exceptions', href: `/workspaces/${workspaceId}/exceptions`, exact: false, icon: AlertTriangle },
+        { name: 'Scans', href: `/workspaces/${workspaceId}/scans`, exact: false, icon: Activity },
+        { name: 'Changelog', href: `/workspaces/${workspaceId}/settings/changelog`, exact: false, icon: Settings },
     ]
 
 
