@@ -17,6 +17,9 @@ export type EvidenceTypeConfig = {
     maxAgeDays: number
     requiredKeywords: string[]
     requiredDocTypes: string[]
+    systemSource?: string | null
+    accountableRole?: string | null
+    testProcedure?: string | null
 }
 
 export type EvidenceDoc = {
@@ -46,22 +49,26 @@ export type RequirementEvaluation = {
     freshnessPass: boolean | null
     completenessPass: boolean | null
     consistencyPass: boolean | null
+    hasOwner: boolean           // traceability: evidence has an identified owner
+    hasSystemSource: boolean    // traceability: evidence came from a known system
 }
 
 export type ARIResult = {
-    coverage: number      // % of requirements with any evidence (0-1)
-    validity: number      // % of evidence passing quality gate (0-1)
-    freshness: number     // % of evidence within time window (0-1)
-    exceptionLoad: number // inverse of fail weight (0-1)
-    score: number         // final ARI score (0-100)
+    coverage: number        // % of requirements with any evidence (0-1)
+    validity: number        // % of evidence passing quality gate (0-1)
+    freshness: number       // % of evidence within time window (0-1)
+    exceptionLoad: number   // inverse of fail weight (0-1)
+    traceability: number    // % of passing controls with complete audit trail (0-1)
+    score: number           // final ARI score (0-100)
 }
 
 // ARI component weights (must sum to 1.0)
 const ARI_WEIGHTS = {
-    coverage: 0.30,
-    validity: 0.35,
-    freshness: 0.20,
+    coverage:      0.25,
+    validity:      0.30,
+    freshness:     0.15,
     exceptionLoad: 0.15,
+    traceability:  0.15,
 }
 
 /**
@@ -76,7 +83,6 @@ export function runQualityGate(
     const failureReasons: string[] = []
 
     // ── Layer 2a: Freshness ──────────────────────────────────────────
-    // Use evidenceDate if set, otherwise fall back to uploadedAt
     const referenceDate = doc.evidenceDate ?? doc.uploadedAt
     const ageInDays = (now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24)
     const freshnessPass = ageInDays <= evidenceType.maxAgeDays
@@ -87,7 +93,6 @@ export function runQualityGate(
     }
 
     // ── Layer 2b: Completeness ───────────────────────────────────────
-    // Doc type must be in the allowed list for this evidence type
     const typeMatch = doc.docType && evidenceType.requiredDocTypes.includes(doc.docType)
     const completenessPass = Boolean(typeMatch)
     if (!completenessPass) {
@@ -97,7 +102,6 @@ export function runQualityGate(
     }
 
     // ── Layer 2c: Consistency ────────────────────────────────────────
-    // Required keywords must appear in the extracted text preview
     const textLower = (doc.extractedTextPreview ?? '').toLowerCase()
     const missingKeywords = evidenceType.requiredKeywords.filter(
         kw => !textLower.includes(kw.toLowerCase())
@@ -120,7 +124,6 @@ export function runQualityGate(
 
 /**
  * Evaluate a single requirement against all candidate documents.
- * Returns a RequirementEvaluation plus per-finding quality gate booleans.
  */
 export function evaluateRequirement(
     requirementId: string,
@@ -131,7 +134,11 @@ export function evaluateRequirement(
     allWorkspaceDocs: EvidenceDoc[],
     now: Date = new Date()
 ): RequirementEvaluation {
-    // No EvidenceType defined for this requirement yet — use legacy heuristic pass-through
+    // Traceability checks
+    const hasOwner = candidateDocs.some(d => !!d.ownerName)
+    const hasSystemSource = !!evidenceType?.systemSource
+
+    // No EvidenceType defined for this requirement yet — legacy heuristic
     if (!evidenceType) {
         return {
             requirementId,
@@ -145,6 +152,8 @@ export function evaluateRequirement(
             freshnessPass: null,
             completenessPass: null,
             consistencyPass: null,
+            hasOwner,
+            hasSystemSource,
         }
     }
 
@@ -155,9 +164,6 @@ export function evaluateRequirement(
     }))
 
     const passingDocs = gatedResults.filter(r => r.gate.overallPass)
-    const partialDocs = gatedResults.filter(r => !r.gate.overallPass && candidateDocs.length > 0)
-
-    // Aggregate gate results for the finding (use best-case from passing docs, or first failing)
     const representativeGate = passingDocs[0]?.gate ?? gatedResults[0]?.gate ?? null
 
     if (passingDocs.length > 0) {
@@ -171,18 +177,20 @@ export function evaluateRequirement(
             freshnessPass: representativeGate?.freshnessPass ?? null,
             completenessPass: representativeGate?.completenessPass ?? null,
             consistencyPass: representativeGate?.consistencyPass ?? null,
+            hasOwner,
+            hasSystemSource,
         }
     }
 
-    if (partialDocs.length > 0) {
+    if (gatedResults.length > 0) {
         const allFailureReasons = gatedResults
             .flatMap(r => r.gate.failureReasons)
-            .filter((v, i, a) => a.indexOf(v) === i) // deduplicate
+            .filter((v, i, a) => a.indexOf(v) === i)
         return {
             requirementId,
             status: 'PARTIAL',
             confidence: 0.4,
-            matchedDocIds: partialDocs.map(r => r.doc.id),
+            matchedDocIds: gatedResults.map(r => r.doc.id),
             notes: `Evidence found but failed quality gate: ${allFailureReasons.join(' | ')}`,
             recommendedActions: [
                 `Review and update documents to meet quality gate requirements for: ${evidenceType.name}`,
@@ -191,10 +199,12 @@ export function evaluateRequirement(
             freshnessPass: representativeGate?.freshnessPass ?? null,
             completenessPass: representativeGate?.completenessPass ?? null,
             consistencyPass: representativeGate?.consistencyPass ?? null,
+            hasOwner,
+            hasSystemSource,
         }
     }
 
-    // Check if any docs of correct type exist (type match only, keywords missing)
+    // Check if any docs of correct type exist workspace-wide
     const typeOnlyDocs = allWorkspaceDocs.filter(
         d => d.docType && evidenceType.requiredDocTypes.includes(d.docType)
     )
@@ -211,6 +221,8 @@ export function evaluateRequirement(
             freshnessPass: null,
             completenessPass: true,
             consistencyPass: false,
+            hasOwner: false,
+            hasSystemSource,
         }
     }
 
@@ -224,21 +236,23 @@ export function evaluateRequirement(
         freshnessPass: null,
         completenessPass: null,
         consistencyPass: null,
+        hasOwner: false,
+        hasSystemSource: false,
     }
 }
 
 /**
  * Compute the Audit Readiness Index from a set of requirement evaluations.
- * Each component is calculated from logged, deterministic data.
+ * 5-component ARI: Coverage, Validity, Freshness, Exception Load, Traceability.
  */
 export function computeARI(
     evaluations: RequirementEvaluation[],
     severityWeights: Record<string, number>
 ): ARIResult {
     const total = evaluations.length
-    if (total === 0) return { coverage: 0, validity: 0, freshness: 0, exceptionLoad: 0, score: 0 }
+    if (total === 0) return { coverage: 0, validity: 0, freshness: 0, exceptionLoad: 0, traceability: 0, score: 0 }
 
-    // Coverage: % of requirements that have any evidence (not FAIL with no matches)
+    // Coverage: % of requirements that have any evidence
     const withEvidence = evaluations.filter(e => e.matchedDocIds.length > 0).length
     const coverage = withEvidence / total
 
@@ -260,7 +274,6 @@ export function computeARI(
     let totalWeight = 0
     let failWeight = 0
     for (const e of evaluations) {
-        // We don't have per-evaluation severity here, so use uniform weight
         const w = 1
         totalWeight += w
         if (e.status === 'FAIL') failWeight += w
@@ -268,17 +281,27 @@ export function computeARI(
     }
     const exceptionLoad = totalWeight > 0 ? 1 - (failWeight / totalWeight) : 1
 
+    // Traceability: % of passing controls with complete audit trail
+    // A control is fully traceable if it has: matched docs + owner + system source
+    const passingControls = evaluations.filter(e => e.status === 'PASS')
+    const traceableControls = passingControls.filter(e => e.hasOwner && e.hasSystemSource)
+    const traceability = passingControls.length > 0
+        ? traceableControls.length / passingControls.length
+        : 0
+
     const score =
-        (coverage * ARI_WEIGHTS.coverage +
-            validity * ARI_WEIGHTS.validity +
-            freshness * ARI_WEIGHTS.freshness +
-            exceptionLoad * ARI_WEIGHTS.exceptionLoad) * 100
+        (coverage      * ARI_WEIGHTS.coverage +
+         validity      * ARI_WEIGHTS.validity +
+         freshness     * ARI_WEIGHTS.freshness +
+         exceptionLoad * ARI_WEIGHTS.exceptionLoad +
+         traceability  * ARI_WEIGHTS.traceability) * 100
 
     return {
-        coverage: Math.round(coverage * 1000) / 1000,
-        validity: Math.round(validity * 1000) / 1000,
-        freshness: Math.round(freshness * 1000) / 1000,
+        coverage:      Math.round(coverage * 1000) / 1000,
+        validity:      Math.round(validity * 1000) / 1000,
+        freshness:     Math.round(freshness * 1000) / 1000,
         exceptionLoad: Math.round(exceptionLoad * 1000) / 1000,
-        score: Math.round(score * 10) / 10,
+        traceability:  Math.round(traceability * 1000) / 1000,
+        score:         Math.round(score * 10) / 10,
     }
 }

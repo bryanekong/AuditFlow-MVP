@@ -35,6 +35,7 @@ export default async function ScanResultsPage({ params }: { params: { id: string
     const ariValidity = scan.ariValidity ?? null
     const ariFreshness = scan.ariFreshness ?? null
     const ariExceptionLoad = scan.ariExceptionLoad ?? null
+    const ariTraceability = scan.ariTraceability ?? null
 
     const ariColor = (val: number | null) => {
         if (val === null) return 'text-gray-400'
@@ -65,9 +66,9 @@ export default async function ScanResultsPage({ params }: { params: { id: string
                 <div>
                     <div className="flex items-center gap-2 mb-3">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Audit Readiness Index</h2>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">(Coverage 30% · Validity 35% · Freshness 20% · Exception Load 15%)</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">(Coverage 25% · Validity 30% · Freshness 15% · Exception Load 15% · Traceability 15%)</span>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         <div className="md:col-span-1 bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-800 shadow-sm transition hover:shadow-md">
                             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">ARI Score</h3>
                             <p className={`mt-2 text-3xl font-bold ${ariColor(ariScore)}`}>{ariScore.toFixed(1)}%</p>
@@ -91,6 +92,11 @@ export default async function ScanResultsPage({ params }: { params: { id: string
                             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Exception Load</h3>
                             <p className={`mt-2 text-3xl font-bold ${ariColor(ariExceptionLoad)}`}>{ariExceptionLoad !== null ? `${ariExceptionLoad.toFixed(1)}%` : '–'}</p>
                             <p className="text-xs text-gray-400 mt-1">Low open exceptions</p>
+                        </div>
+                        <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-zinc-800 shadow-sm transition hover:shadow-md">
+                            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Traceability</h3>
+                            <p className={`mt-2 text-3xl font-bold ${ariColor(ariTraceability)}`}>{ariTraceability !== null ? `${ariTraceability.toFixed(1)}%` : '–'}</p>
+                            <p className="text-xs text-gray-400 mt-1">Complete audit trail</p>
                         </div>
                     </div>
                 </div>

@@ -139,6 +139,7 @@ export default async function WorkspaceDashboard({ params }: { params: { id: str
                                 { label: 'Validity', val: latestScan.ariValidity },
                                 { label: 'Freshness', val: latestScan.ariFreshness },
                                 { label: 'Exception Load', val: latestScan.ariExceptionLoad },
+                                { label: 'Traceability', val: latestScan.ariTraceability },
                             ].map(({ label, val }) => (
                                 <div key={label}>
                                     <div className="flex justify-between text-sm mb-1">

@@ -142,6 +142,7 @@ export async function runScan(workspaceId: string, formData: FormData) {
             ariValidity: Math.round(ari.validity * 1000) / 10,
             ariFreshness: Math.round(ari.freshness * 1000) / 10,
             ariExceptionLoad: Math.round(ari.exceptionLoad * 1000) / 10,
+            ariTraceability:  Math.round(ari.traceability * 1000) / 10,
         }
     })
 

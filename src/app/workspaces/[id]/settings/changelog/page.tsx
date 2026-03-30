@@ -7,7 +7,7 @@ export default async function FrameworkChangelogPage({ params }: { params: { id:
             framework: { select: { name: true, code: true } },
             changeLogs: { orderBy: { createdAt: 'asc' } },
             evidenceTypes: {
-                select: { name: true, maxAgeDays: true, systemSource: true, requiredDocTypes: true }
+                select: { name: true, maxAgeDays: true, systemSource: true, requiredDocTypes: true, testProcedure: true, accountableRole: true }
             }
         }
     })
@@ -67,6 +67,13 @@ export default async function FrameworkChangelogPage({ params }: { params: { id:
                                             <div>Max age: <span className="text-gray-700 dark:text-gray-300 font-medium">{et.maxAgeDays} days</span></div>
                                             <div>Doc types: <span className="text-gray-700 dark:text-gray-300 font-medium">{et.requiredDocTypes.join(', ')}</span></div>
                                             <div>Source: <span className="text-gray-700 dark:text-gray-300 font-medium">{et.systemSource ?? 'any'}</span></div>
+                                            {et.accountableRole && <div>Owner: <span className="text-gray-700 dark:text-gray-300 font-medium">{et.accountableRole}</span></div>}
+                                            {et.testProcedure && (
+                                                <details className="mt-2">
+                                                    <summary className="cursor-pointer text-xs text-blue-600 dark:text-blue-400 hover:underline">View test procedure</summary>
+                                                    <pre className="mt-1 text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-sans">{et.testProcedure}</pre>
+                                                </details>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

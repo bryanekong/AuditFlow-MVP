@@ -137,6 +137,8 @@ model EvidenceType {
   requiredKeywords String[]              // must appear in extractedTextPreview
   requiredFields   Json?                 // JSON list of metadata fields that must be present
   systemSource     String?               // e.g. "Google Workspace", "Jira", "manual"
+  testProcedure    String?  @db.Text     // Auditor-aligned test procedure steps
+  accountableRole  String?               // e.g. "CISO", "IT Manager", "DPO"
   createdAt        DateTime              @default(now())
   libraryVersion   ControlLibraryVersion @relation(fields: [libraryVersionId], references: [id])
   requirement      FrameworkRequirement  @relation(fields: [requirementId], references: [id])
@@ -182,7 +184,7 @@ model QualityGateResult {
 
 model Framework {
   id           String                 @id @default(uuid())
-  code         String                 // ISO27001|GDPR
+  code         String                 // ISO27001
   name         String
   version      String
   description  String?
@@ -225,6 +227,7 @@ model ScanRun {
   ariValidity      Float?        // ARI component: % evidence passing quality gate
   ariFreshness     Float?        // ARI component: % evidence within time window
   ariExceptionLoad Float?        // ARI component: inverse exception severity score
+  ariTraceability  Float?        // ARI component: % controls with complete audit trail
   ariScore         Float?        // Final weighted ARI score (0-100)
   qualityResults   QualityGateResult[]
 }

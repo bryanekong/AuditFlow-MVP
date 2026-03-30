@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; margin: 0; padding: 40px; }
     h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
     .meta { color: #6b7280; font-size: 14px; margin-bottom: 32px; }
-    .ari-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 40px; }
+    .ari-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-bottom: 40px; }
     .ari-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
     .ari-label { font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
     .ari-value { font-size: 28px; font-weight: 700; margin-top: 6px; }
@@ -111,6 +111,10 @@ export async function POST(req: NextRequest) {
     <div class="ari-card">
         <div class="ari-label">Exception Load</div>
         <div class="ari-value ${(scan.ariExceptionLoad ?? 0) >= 80 ? 'green' : (scan.ariExceptionLoad ?? 0) >= 50 ? 'yellow' : 'red'}">${scan.ariExceptionLoad?.toFixed(1) ?? '–'}%</div>
+    </div>
+    <div class="ari-card">
+        <div class="ari-label">Traceability</div>
+        <div class="ari-value ${(scan.ariTraceability ?? 0) >= 80 ? 'green' : (scan.ariTraceability ?? 0) >= 50 ? 'yellow' : 'red'}">${scan.ariTraceability?.toFixed(1) ?? '–'}%</div>
     </div>
 </div>
 
@@ -149,6 +153,7 @@ export async function POST(req: NextRequest) {
             validity: scan.ariValidity,
             freshness: scan.ariFreshness,
             exceptionLoad: scan.ariExceptionLoad,
+            traceability: scan.ariTraceability,
         },
         summary: { pass: passes.length, partial: partials.length, fail: fails.length },
         findings: scan.findings.map(f => ({
