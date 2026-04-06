@@ -58,8 +58,25 @@ export async function signup(formData: FormData) {
                     onboardingCompleted: false
                 }
             })
-        } catch (e) {
-            console.error('Failed to sync user to Prisma', e)
+        } catch (e: any) {
+            if (e.code === 'P2002') {
+                console.warn('Orphaned Prisma user detected with same email. Clearing orphaned record...')
+                try {
+                    await prisma.user.delete({ where: { email: data.email } })
+                    await prisma.user.create({
+                        data: {
+                            id: authData.user.id,
+                            email: data.email,
+                            name: data.name,
+                            onboardingCompleted: false
+                        }
+                    })
+                } catch (retryErr) {
+                    console.error('Failed to resolve orphaned user', retryErr)
+                }
+            } else {
+                console.error('Failed to sync user to Prisma', e)
+            }
         }
     }
 
