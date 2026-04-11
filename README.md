@@ -46,7 +46,7 @@ SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 2. **Setup Database**: `npx prisma db push`
 3. **Generate Client**: `npx prisma generate`
 4. **Seed Frameworks**: `npx tsx prisma/seed.ts`
-5. **Create Storage Bucket**: Create a private storage bucket named `documents` in your Supabase project. Ensure policies allow the backend to read/write/delete (Service Role overrides policies, so this works out of the box).
+5. **Create Storage Bucket**: Create a private storage bucket named `documents` in your Supabase project. Ensure policies allow the backend to read/write/delete (Service Role overrides policies, so this works out of the box)!!!!
 6. **Start Dev Server**: `npm run dev`
 
 ## Background Jobs (Inngest)
