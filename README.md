@@ -1,4 +1,4 @@
-# AuditFlow AI
+# AuditFlow
 
 A web application that helps SMEs prepare for ISO 27001 and GDPR audits by scanning uploaded documents against frameworks and generating gap reports.
 

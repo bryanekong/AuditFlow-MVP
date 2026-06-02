@@ -125,7 +125,7 @@ export function OnboardingFlow({
                 {step === 1 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to AuditFlow AI</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to AuditFlow</h2>
                             <p className="mt-2 text-gray-600 dark:text-gray-400">Let's set up your workspace profile before we begin verifying your compliance posture.</p>
                         </div>
                         <div className="space-y-4">

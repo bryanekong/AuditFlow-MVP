@@ -7,7 +7,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
-      <h1 className="text-5xl font-black mb-6 text-gray-900 dark:text-white tracking-tight">AuditFlow AI</h1>
+      <h1 className="text-5xl font-black mb-6 text-gray-900 dark:text-white tracking-tight">AuditFlow</h1>
       <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl">
         The Compliance Evidence Verification Engine for ISO 27001. Ingest evidence, verify controls, and export Auditor Packs in seconds.
       </p>

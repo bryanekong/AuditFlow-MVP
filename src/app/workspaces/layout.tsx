@@ -25,7 +25,7 @@ export default async function WorkspacesLayout({ children }: { children: ReactNo
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col dark:bg-zinc-950">
             <header className="border-b bg-white px-6 py-4 flex items-center justify-between dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-                <Link href="/workspaces" className="font-bold text-lg dark:text-white">AuditFlow AI</Link>
+                <Link href="/workspaces" className="font-bold text-lg dark:text-white">AuditFlow</Link>
                 <div className="flex items-center gap-4">
                     <span className="text-sm text-gray-500 dark:text-gray-400">{user.email}</span>
                     <form action={signout}>
