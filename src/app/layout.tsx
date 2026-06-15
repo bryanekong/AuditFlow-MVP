@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AuditFlow",
-    description: "Automate compliance audits. Ingest evidence, verify ISO 27001 and GDPR controls, and export auditor-ready packs in seconds.",
+    description: "Compliance automation.",
     images: ["/og-image.png"],
   },
 };
