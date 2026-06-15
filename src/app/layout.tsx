@@ -15,12 +15,12 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AuditFlow - AI-Powered Compliance Automation",
-  description: "Automate compliance audits. Ingest evidence, verify ISO 27001 and GDPR controls, and export auditor-ready packs in seconds.",
+  title: "AuditFlow",
+  description: "AI-Powered Compliance Automation",
   metadataBase: new URL("https://auditflow.uk.com"),
   openGraph: {
-    title: "AuditFlow - AI-Powered Compliance Automation",
-    description: "Automate compliance audits. Ingest evidence, verify ISO 27001 and GDPR controls, and export auditor-ready packs in seconds.",
+    title: "AuditFlow",
+    description: "AI-Powered Compliance Automation",
     url: "https://auditflow.uk.com",
     siteName: "AuditFlow",
     images: [
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AuditFlow - AI-Powered Compliance Automation",
-    description: "Automate compliance audits. Ingest evidence, verify ISO 27001 and GDPR controls, and export auditor-ready packs in seconds.",
+    title: "AuditFlow",
+    description: "AI-Powered Compliance Automation",
     images: ["/og-image.png"],
   },
 };
