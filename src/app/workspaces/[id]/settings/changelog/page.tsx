@@ -17,7 +17,7 @@ export default async function FrameworkChangelogPage({ params }: { params: { id:
             <div>
                 <h1 className="text-2xl font-bold dark:text-white">Framework Changelog</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Versioned release history of the control library. Every change is logged and peer-reviewed.
+                    Versioned release history of the control library. Every change is logged and internally reviewed.
                 </p>
             </div>
 

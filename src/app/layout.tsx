@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AuditFlow",
-    description: "Compliance automation.",
+    description: "AI-powered compliance automation.",
     images: ["/og-image.png"],
   },
 };
